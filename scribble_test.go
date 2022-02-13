@@ -24,14 +24,20 @@ var (
 //
 func TestMain(m *testing.M) {
 
-	// remove any thing for a potentially failed previous test
-	os.RemoveAll("./deep")
+	// remove anything for a potentially failed previous test
+	err := os.RemoveAll("./deep")
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// run
 	code := m.Run()
 
 	// cleanup
-	os.RemoveAll("./deep")
+	err = os.RemoveAll("./deep")
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// exit
 	os.Exit(code)
@@ -46,7 +52,10 @@ func TestNew(t *testing.T) {
 	}
 
 	// create a new database
-	createDB()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
 
 	// database should exist
 	if _, err := os.Stat(database); err != nil {
@@ -54,7 +63,10 @@ func TestNew(t *testing.T) {
 	}
 
 	// should use existing database
-	createDB()
+	err = createDB()
+	if err != nil {
+		t.FailNow()
+	}
 
 	// database should exist
 	if _, err := os.Stat(database); err != nil {
@@ -65,7 +77,10 @@ func TestNew(t *testing.T) {
 //
 func TestWriteAndRead(t *testing.T) {
 
-	createDB()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
 
 	// add fish to database
 	if err := db.Write(collection, "redfish", redfish); err != nil {
@@ -82,14 +97,24 @@ func TestWriteAndRead(t *testing.T) {
 		t.Error("Expected red fish, got: ", onefish.Type)
 	}
 
-	destroySchool()
+	err = destroySchool()
+	if err != nil {
+		t.FailNow()
+	}
 }
 
 //
 func TestReadall(t *testing.T) {
 
-	createDB()
-	createSchool()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
+
+	err = createSchool()
+	if err != nil {
+		t.FailNow()
+	}
 
 	fish, err := db.ReadAll(collection)
 	if err != nil {
@@ -100,13 +125,19 @@ func TestReadall(t *testing.T) {
 		t.Error("Expected some fish, have none")
 	}
 
-	destroySchool()
+	err = destroySchool()
+	if err != nil {
+		t.FailNow()
+	}
 }
 
 //
 func TestWriteAndReadEmpty(t *testing.T) {
 
-	createDB()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
 
 	// create a fish with no home
 	if err := db.Write("", "redfish", redfish); err == nil {
@@ -123,13 +154,16 @@ func TestWriteAndReadEmpty(t *testing.T) {
 		t.Error("Allowed read of empty resource", err.Error())
 	}
 
-	destroySchool()
+	_ = destroySchool()
 }
 
 //
 func TestDelete(t *testing.T) {
 
-	createDB()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
 
 	// add fish to database
 	if err := db.Write(collection, "redfish", redfish); err != nil {
@@ -146,14 +180,20 @@ func TestDelete(t *testing.T) {
 		t.Error("Expected nothing, got fish")
 	}
 
-	destroySchool()
+	_ = destroySchool()
 }
 
 //
 func TestDeleteall(t *testing.T) {
 
-	createDB()
-	createSchool()
+	err := createDB()
+	if err != nil {
+		t.FailNow()
+	}
+	err = createSchool()
+	if err != nil {
+		t.FailNow()
+	}
 
 	if err := db.Delete(collection, ""); err != nil {
 		t.Error("Failed to delete: ", err.Error())
@@ -163,7 +203,7 @@ func TestDeleteall(t *testing.T) {
 		t.Error("Expected nothing, have fish")
 	}
 
-	destroySchool()
+	_ = destroySchool()
 }
 
 //

@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-
-	"github.com/jcelliott/lumber"
 )
 
 // Version is the current version of the project
@@ -50,8 +48,6 @@ type Options struct {
 // New creates a new scribble database at the desired directory location, and
 // returns a *Driver to then use for interacting with the database
 func New(dir string, options *Options) (*Driver, error) {
-
-	//
 	dir = filepath.Clean(dir)
 
 	// create default options
@@ -62,12 +58,6 @@ func New(dir string, options *Options) (*Driver, error) {
 		opts = *options
 	}
 
-	// if no logger is provided, create a default
-	if opts.Logger == nil {
-		opts.Logger = lumber.NewConsoleLogger(lumber.INFO)
-	}
-
-	//
 	driver := Driver{
 		dir:     dir,
 		mutexes: make(map[string]*sync.Mutex),
@@ -76,12 +66,16 @@ func New(dir string, options *Options) (*Driver, error) {
 
 	// if the database already exists, just use it
 	if _, err := os.Stat(dir); err == nil {
-		opts.Logger.Debug("Using '%s' (database already exists)\n", dir)
+		if opts.Logger != nil {
+			opts.Logger.Debug("Using '%s' (database already exists)\n", dir)
+		}
 		return &driver, nil
 	}
 
 	// if the database doesn't exist create it
-	opts.Logger.Debug("Creating scribble database at '%s'...\n", dir)
+	if opts.Logger != nil {
+		opts.Logger.Debug("Creating scribble database at '%s'...\n", dir)
+	}
 	return &driver, os.MkdirAll(dir, 0755)
 }
 
@@ -103,7 +97,6 @@ func (d *Driver) Write(collection, resource string, v interface{}) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	//
 	dir := filepath.Join(d.dir, collection)
 	fnlPath := filepath.Join(dir, resource+".json")
 	tmpPath := fnlPath + ".tmp"
@@ -146,10 +139,9 @@ func (d *Driver) Read(collection, resource string, v interface{}) error {
 		return ErrMissingResource
 	}
 
-	//
 	record := filepath.Join(d.dir, collection, resource)
 
-	// read record from database; if the file doesn't exist `read` will return an err
+	// read record from database; if the file doesn't exist `read` will return an error
 	return read(record, v)
 }
 
@@ -173,7 +165,6 @@ func (d *Driver) ReadAll(collection string) ([][]byte, error) {
 		return nil, ErrMissingCollection
 	}
 
-	//
 	dir := filepath.Join(d.dir, collection)
 
 	// read all the files in the transaction.Collection; an error here just means
@@ -204,7 +195,7 @@ func readAll(files []os.FileInfo, dir string) ([][]byte, error) {
 		records = append(records, b)
 	}
 
-	// unmarhsal the read files as a comma delimeted byte array
+	// unmarshal the read files as a comma delimited byte array
 	return records, nil
 }
 
@@ -217,7 +208,6 @@ func (d *Driver) Delete(collection, resource string) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	//
 	dir := filepath.Join(d.dir, path)
 
 	switch fi, err := stat(dir); {
